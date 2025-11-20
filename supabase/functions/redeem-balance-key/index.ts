@@ -95,13 +95,15 @@ serve(async (req) => {
       );
     }
 
-    // Update user balance
+    // Update user balance - create profile if doesn't exist
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('balance')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
+    let currentBalance = 0;
+    
     if (profileError) {
       console.error('Error fetching profile:', profileError);
       return new Response(
@@ -110,7 +112,31 @@ serve(async (req) => {
       );
     }
 
-    const currentBalance = profile?.balance || 0;
+    if (!profile) {
+      // Create profile if it doesn't exist
+      console.log('Creating profile for user:', user.id);
+      const { error: createError } = await supabaseClient
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          username: user.email || user.id,
+          balance: 0,
+          seller_score: 0,
+          total_sales: 0
+        });
+
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        return new Response(
+          JSON.stringify({ error: 'Profil oluşturulamadı' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      currentBalance = 0;
+    } else {
+      currentBalance = profile.balance || 0;
+    }
+
     const newBalance = parseFloat(currentBalance.toString()) + parseFloat(keyData.amount.toString());
 
     const { error: balanceError } = await supabaseClient
