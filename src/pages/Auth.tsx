@@ -20,6 +20,26 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Check if IP is banned first
+    try {
+      const { data: ipCheck } = await supabase.functions.invoke('check-ip-ban', {
+        body: {},
+      });
+
+      if (ipCheck?.is_banned) {
+        toast({
+          title: "Erişim Engellendi",
+          description: ipCheck.ban_reason || "IP adresiniz sistemden yasaklanmış.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('IP check error:', error);
+      // Continue with signup even if IP check fails
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,

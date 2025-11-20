@@ -86,6 +86,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_bans: {
+        Row: {
+          banned_at: string | null
+          banned_by: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          ip_address: string
+          reason: string | null
+        }
+        Insert: {
+          banned_at?: string | null
+          banned_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address: string
+          reason?: string | null
+        }
+        Update: {
+          banned_at?: string | null
+          banned_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           auto_delivery: boolean | null
@@ -637,6 +667,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_ip_banned: { Args: { check_ip: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

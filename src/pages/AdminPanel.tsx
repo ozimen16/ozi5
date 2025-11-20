@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutDashboard, Users, FolderTree, Package, ShoppingCart, Images, Key, Wallet, Flag, Settings, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Users, FolderTree, Package, ShoppingCart, Images, Key, Wallet, Flag, Settings, HelpCircle, Ban } from "lucide-react";
 import DashboardTab from "@/components/admin/DashboardTab";
 import UsersTab from "@/components/admin/UsersTab";
 import CategoriesTab from "@/components/admin/CategoriesTab";
@@ -18,6 +18,7 @@ import WithdrawalsTab from "@/components/admin/WithdrawalsTab";
 import ReportsTab from "@/components/admin/ReportsTab";
 import SettingsTab from "@/components/admin/SettingsTab";
 import SupportTicketsTab from "@/components/admin/SupportTicketsTab";
+import IpBansTab from "@/components/admin/IpBansTab";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const AdminPanel = () => {
           <p className="text-muted-foreground">Tüm platform yönetim işlemlerini buradan gerçekleştirebilirsiniz</p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 lg:grid-cols-11 gap-2 h-auto bg-muted/50 p-2">
+          <TabsList className="grid grid-cols-6 lg:grid-cols-12 gap-2 h-auto bg-muted/50 p-2">
             <TabsTrigger value="dashboard" className="flex flex-col items-center gap-1 py-3"><LayoutDashboard className="h-4 w-4" /><span className="text-xs">Panel</span></TabsTrigger>
             <TabsTrigger value="users" className="flex flex-col items-center gap-1 py-3"><Users className="h-4 w-4" /><span className="text-xs">Kullanıcılar</span></TabsTrigger>
             <TabsTrigger value="categories" className="flex flex-col items-center gap-1 py-3"><FolderTree className="h-4 w-4" /><span className="text-xs">Kategoriler</span></TabsTrigger>
@@ -86,6 +87,7 @@ const AdminPanel = () => {
             <TabsTrigger value="sliders" className="flex flex-col items-center gap-1 py-3"><Images className="h-4 w-4" /><span className="text-xs">Slider</span></TabsTrigger>
             <TabsTrigger value="balance-keys" className="flex flex-col items-center gap-1 py-3"><Key className="h-4 w-4" /><span className="text-xs">Bakiye Key</span></TabsTrigger>
             <TabsTrigger value="withdrawals" className="flex flex-col items-center gap-1 py-3"><Wallet className="h-4 w-4" /><span className="text-xs">Çekim</span></TabsTrigger>
+            <TabsTrigger value="ip-bans" className="flex flex-col items-center gap-1 py-3"><Ban className="h-4 w-4" /><span className="text-xs">IP Yasakları</span></TabsTrigger>
             <TabsTrigger value="reports" className="flex flex-col items-center gap-1 py-3"><Flag className="h-4 w-4" /><span className="text-xs">Raporlar</span></TabsTrigger>
             <TabsTrigger value="support" className="flex flex-col items-center gap-1 py-3"><HelpCircle className="h-4 w-4" /><span className="text-xs">Destek</span></TabsTrigger>
             <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-3"><Settings className="h-4 w-4" /><span className="text-xs">Ayarlar</span></TabsTrigger>
@@ -98,6 +100,7 @@ const AdminPanel = () => {
           <TabsContent value="sliders"><SlidersTab /></TabsContent>
           <TabsContent value="balance-keys"><BalanceKeysTab /></TabsContent>
           <TabsContent value="withdrawals"><WithdrawalsTab /></TabsContent>
+          <TabsContent value="ip-bans"><IpBansTab /></TabsContent>
           <TabsContent value="reports"><ReportsTab /></TabsContent>
           <TabsContent value="support"><SupportTicketsTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
