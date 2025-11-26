@@ -61,7 +61,7 @@ const Footer = () => {
               </li>
               <li>7/24 Canlı Destek</li>
               <li className="mt-4 p-4 rounded-lg bg-card/50 border border-glass-border hover:border-brand-blue/50 transition-colors">
-                <p className="font-semibold text-foreground mb-1">Satıcı mısınız?</p>
+                <p className="font-semibold text-foreground mb-1">notshop@gmail.com</p>
                 <p className="text-xs mb-2">Hemen ilanınızı oluşturun ve satışa başlayın!</p>
                 <a href="/auth" className="text-brand-blue hover:underline text-xs font-medium">
                   Ücretsiz Kayıt Ol →
