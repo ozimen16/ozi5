@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { LayoutDashboard, Users, FolderTree, Package, ShoppingCart, Images, Key, Wallet, Flag, Settings, HelpCircle, Ban } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import DashboardTab from "@/components/admin/DashboardTab";
 import UsersTab from "@/components/admin/UsersTab";
 import CategoriesTab from "@/components/admin/CategoriesTab";
@@ -22,104 +21,61 @@ import SupportTicketsTab from "@/components/admin/SupportTicketsTab";
 import IpBansTab from "@/components/admin/IpBansTab";
 
 const AdminPanel = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
-  // Hardcoded credentials - SECURITY WARNING: This is not secure!
-  const ADMIN_USERNAME = "notshop2025";
-  const ADMIN_PASSWORD = "notshop2025";
-
-  useState(() => {
-    // Check if already logged in
-    const adminAuth = localStorage.getItem("admin_auth");
-    if (adminAuth === "authenticated") {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
   });
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      localStorage.setItem("admin_auth", "authenticated");
-      setIsAuthenticated(true);
-      toast({ title: "Başarılı", description: "Admin paneline hoş geldiniz" });
-    } else {
-      toast({ 
-        title: "Hata", 
-        description: "Kullanıcı adı veya şifre hatalı", 
-        variant: "destructive" 
-      });
+  const { data: userRole, isLoading: roleLoading } = useQuery({
+    queryKey: ["userRole", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session!.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!sessionLoading && !roleLoading) {
+      if (!session) {
+        toast({ title: "Yetkilendirme Gerekli", description: "Admin paneline erişmek için giriş yapmalısınız", variant: "destructive" });
+        navigate("/auth");
+      } else if (!userRole) {
+        toast({ title: "Yetkisiz Erişim", description: "Bu sayfaya erişim yetkiniz bulunmamaktadır", variant: "destructive" });
+        navigate("/");
+      } else {
+        setIsAdmin(true);
+      }
     }
-  };
+  }, [session, userRole, sessionLoading, roleLoading, navigate, toast]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_auth");
-    setIsAuthenticated(false);
-    setUsername("");
-    setPassword("");
-    toast({ title: "Çıkış Yapıldı", description: "Admin panelinden çıkış yaptınız" });
-  };
-
-  if (isLoading) {
+  if (sessionLoading || roleLoading || isAdmin === null) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Admin Paneli Girişi</CardTitle>
-            <CardDescription>Devam etmek için giriş yapın</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Kullanıcı Adı</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Kullanıcı adınızı girin"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Şifre</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Şifrenizi girin"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">Giriş Yap</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2"><span className="bg-gradient-to-r from-brand-blue to-primary bg-clip-text text-transparent">Admin Paneli</span></h1>
-            <p className="text-muted-foreground">Tüm platform yönetim işlemlerini buradan gerçekleştirebilirsiniz</p>
-          </div>
-          <Button onClick={handleLogout} variant="outline">Çıkış Yap</Button>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2"><span className="bg-gradient-to-r from-brand-blue to-primary bg-clip-text text-transparent">Admin Paneli</span></h1>
+          <p className="text-muted-foreground">Tüm platform yönetim işlemlerini buradan gerçekleştirebilirsiniz</p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid grid-cols-6 lg:grid-cols-12 gap-2 h-auto bg-muted/50 p-2">

@@ -1,6 +1,8 @@
 import { Facebook, Twitter, Instagram, Mail, Package } from "lucide-react";
+
 const Footer = () => {
-  return <footer className="border-t border-glass-border bg-brand-navy">
+  return (
+    <footer className="border-t border-glass-border bg-brand-navy">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
@@ -9,7 +11,9 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-blue to-primary flex items-center justify-center shadow-glow-blue">
                 <Package className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-bold bg-gradient-to-r from-brand-blue to-primary bg-clip-text text-transparent">Not Shop</h3>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-brand-blue to-primary bg-clip-text text-transparent">
+                hesapmarket
+              </h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Güvenli oyun hesabı ve dijital içerik alım satım platformu
@@ -57,11 +61,11 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-blue" />
-                <span>notshop@gmail.com</span>
+                <span>destek@hesapmarket.com</span>
               </li>
               <li>7/24 Canlı Destek</li>
               <li className="mt-4 p-4 rounded-lg bg-card/50 border border-glass-border hover:border-brand-blue/50 transition-colors">
-                <p className="font-semibold text-foreground mb-1">notshop@gmail.com</p>
+                <p className="font-semibold text-foreground mb-1">Satıcı mısınız?</p>
                 <p className="text-xs mb-2">Hemen ilanınızı oluşturun ve satışa başlayın!</p>
                 <a href="/auth" className="text-brand-blue hover:underline text-xs font-medium">
                   Ücretsiz Kayıt Ol →
@@ -80,6 +84,8 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default Footer;
