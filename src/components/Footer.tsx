@@ -57,7 +57,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-blue" />
-                <span>notshop@g</span>
+                <span>notshop@gmail.com</span>
               </li>
               <li>7/24 Canlı Destek</li>
               <li className="mt-4 p-4 rounded-lg bg-card/50 border border-glass-border hover:border-brand-blue/50 transition-colors">
