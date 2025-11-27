@@ -6,10 +6,8 @@ import FeaturedListings from "@/components/FeaturedListings";
 import TrustBadges from "@/components/TrustBadges";
 import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <AnnouncementBanner />
       <Navbar />
       
@@ -49,13 +47,9 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-brand-blue to-primary bg-clip-text text-transparent">
-                Nasıl Çalışır?
-              </span>
+              
             </h2>
-            <p className="text-muted-foreground">
-              3 basit adımda güvenli alışveriş yapın
-            </p>
+            
           </div>
           <HowItWorks />
         </div>
@@ -63,8 +57,6 @@ const Index = () => {
 
       {/* Footer */}
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
