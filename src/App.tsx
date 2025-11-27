@@ -14,6 +14,7 @@ import Wallet from "./pages/Wallet";
 import Withdraw from "./pages/Withdraw";
 import Messages from "./pages/Messages";
 import Support from "./pages/Support";
+import Orders from "./pages/Orders";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/withdraw" element={<Withdraw />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/support" element={<Support />} />
           <Route path="/admin" element={<AdminPanel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
