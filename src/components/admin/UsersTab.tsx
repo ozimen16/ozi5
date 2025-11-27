@@ -46,12 +46,7 @@ const UsersTab = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      // First get all auth users
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) throw authError;
-
-      // Get profiles
+      // Get all profiles with user data
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -67,14 +62,13 @@ const UsersTab = () => {
       if (rolesError) throw rolesError;
 
       // Merge data
-      const usersWithData = authUsers.map((authUser) => {
-        const profile = profiles?.find((p) => p.user_id === authUser.id);
-        const role = allRoles?.find((r) => r.user_id === authUser.id);
+      const usersWithData = (profiles || []).map((profile) => {
+        const role = allRoles?.find((r) => r.user_id === profile.user_id);
         
         return {
-          id: authUser.id,
-          email: authUser.email,
-          created_at: authUser.created_at,
+          id: profile.user_id,
+          email: profile.user_id, // We don't have email in profiles, so we use user_id
+          created_at: profile.created_at,
           ...profile,
           user_roles: role || { role: "user" },
         };

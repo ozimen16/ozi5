@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,13 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, MessageSquare, User, Package, Trophy, UserPlus, Clock, CheckCircle, ShieldCheck } from "lucide-react";
+import { Star, MessageSquare, User, Package, Trophy, UserPlus, Clock, CheckCircle, ShieldCheck, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 const SellerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["seller-profile", id],
@@ -27,6 +38,78 @@ const SellerProfile = () => {
       
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: followersCount } = useQuery({
+    queryKey: ["followers-count", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("followers")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", id);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: isFollowing } = useQuery({
+    queryKey: ["is-following", id, session?.user?.id],
+    enabled: !!id && !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("follower_id", session!.user.id)
+        .eq("following_id", id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return !!data;
+    },
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("Takip etmek için giriş yapmalısınız");
+      }
+
+      if (isFollowing) {
+        const { error } = await supabase
+          .from("followers")
+          .delete()
+          .eq("follower_id", session.user.id)
+          .eq("following_id", id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("followers")
+          .insert({
+            follower_id: session.user.id,
+            following_id: id,
+          });
+        
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["is-following", id] });
+      queryClient.invalidateQueries({ queryKey: ["followers-count", id] });
+      toast({
+        title: "Başarılı",
+        description: isFollowing ? "Takipten çıkıldı" : "Takip edildi",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -193,9 +276,11 @@ const SellerProfile = () => {
                     </Button>
                     <Button 
                       className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => followMutation.mutate()}
+                      disabled={!session?.user?.id || followMutation.isPending}
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Takip Et
+                      {isFollowing ? "Takipten Çık" : "Takip Et"}
                     </Button>
                   </div>
 
@@ -253,7 +338,7 @@ const SellerProfile = () => {
                   <Card className="bg-slate-800/50 border-slate-700">
                     <CardContent className="p-4 text-center">
                       <UserPlus className="w-8 h-8 mx-auto mb-2 text-pink-400" />
-                      <p className="text-2xl font-bold text-white">29</p>
+                      <p className="text-2xl font-bold text-white">{followersCount || 0}</p>
                       <p className="text-xs text-slate-400">Takipçiler</p>
                     </CardContent>
                   </Card>
@@ -311,7 +396,7 @@ const SellerProfile = () => {
               <UserPlus className="w-4 h-4" />
               Takipçiler
               <Badge variant="secondary" className="ml-1 bg-slate-700">
-                29
+                {followersCount || 0}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -319,31 +404,61 @@ const SellerProfile = () => {
           {/* Listings Tab */}
           <TabsContent value="listings" className="space-y-4 mt-6">
             {listings && listings.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {listings.map((listing) => (
-                  <Card 
+                  <Card
                     key={listing.id}
-                    className="border-glass-border bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all cursor-pointer"
                     onClick={() => navigate(`/listing/${listing.id}`)}
+                    className="group relative overflow-hidden border-glass-border bg-card/50 backdrop-blur-sm hover:border-neon-blue/50 transition-all cursor-pointer"
                   >
-                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                      <img
-                        src={listing.images?.[0] || "/placeholder.svg"}
-                        alt={listing.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold mb-2 line-clamp-2">{listing.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-brand-blue">
-                          ₺{Number(listing.price).toFixed(2)}
-                        </span>
-                        <Badge variant="outline">
-                          Stok: {listing.stock || 0}
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      {listing.images && listing.images.length > 0 ? (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-brand-blue/10 to-primary/10 flex items-center justify-center">
+                          <Package className="w-12 h-12 text-muted-foreground" />
+                        </div>
+                      )}
+                      {listing.featured && (
+                        <Badge className="absolute top-2 right-2 bg-gradient-to-r from-brand-blue to-primary shadow-glow-blue">
+                          Öne Çıkan
                         </Badge>
+                      )}
+                    </div>
+
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Star className="w-4 h-4 fill-success-green text-success-green" />
+                        <span>{Number(profile?.seller_score || 0).toFixed(2)}</span>
+                        <span className="text-xs">
+                          @{profile?.username || "kullanıcı"}
+                        </span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-2xl font-bold text-brand-blue">
+                          ₺{Number(listing.price).toFixed(2)}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Eye className="w-4 h-4" />
+                          <span>{listing.view_count}</span>
+                        </div>
                       </div>
                     </CardContent>
+
+                    <div className="p-4 pt-0">
+                      <Button className="w-full bg-gradient-to-r from-brand-blue to-primary hover:opacity-90 shadow-md">
+                        Satın Al
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
