@@ -59,9 +59,8 @@ const HeroSlider = () => {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${slide.image_url})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 to-brand-navy/60" />
-          </div>
+          />
+
           <div className="relative h-full flex items-center">
             <div className="container mx-auto px-4">
               <div className="max-w-2xl">
