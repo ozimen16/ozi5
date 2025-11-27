@@ -218,9 +218,8 @@ const FeaturedListings = () => {
               <div className="absolute bottom-3 left-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                 <Button
                   size="sm"
-                  variant="secondary"
                   onClick={(e) => handleSellerClick(e, listing.user_id)}
-                  className="flex-1 backdrop-blur-md bg-white/90 hover:bg-white text-foreground shadow-lg"
+                  className="flex-1 backdrop-blur-md bg-red-500 hover:bg-red-600 text-white shadow-lg"
                 >
                   <User className="w-3 h-3 mr-1" />
                   Satıcı
