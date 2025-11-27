@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Camera, Clock, Image as ImageIcon, ArrowLeft, Save } from "lucide-react";
+import { User, Camera, Clock, Image as ImageIcon, ArrowLeft, Save, Plus, Trash2, MessageSquare } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const EditSellerProfile = () => {
   const navigate = useNavigate();
@@ -24,6 +26,9 @@ const EditSellerProfile = () => {
   const [deliveryHours, setDeliveryHours] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementContent, setAnnouncementContent] = useState("");
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -42,6 +47,19 @@ const EditSellerProfile = () => {
         .select("*")
         .eq("user_id", session!.user.id)
         .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: announcements } = useQuery({
+    queryKey: ["my-announcements", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("announcements")
+        .select("*")
+        .eq("user_id", session!.user.id)
+        .order("created_at", { ascending: false });
       return data;
     },
   });
@@ -149,6 +167,50 @@ const EditSellerProfile = () => {
       toast({ title: "Başarılı", description: "Profil güncellendi" });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       navigate("/profile");
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const createAnnouncementMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user?.id) throw new Error("Oturum bulunamadı");
+
+      const { error } = await supabase
+        .from("announcements")
+        .insert({
+          user_id: session.user.id,
+          title: announcementTitle,
+          content: announcementContent,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Başarılı", description: "Duyuru eklendi" });
+      setIsAnnouncementDialogOpen(false);
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
+      queryClient.invalidateQueries({ queryKey: ["my-announcements"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: async (announcementId: string) => {
+      const { error } = await supabase
+        .from("announcements")
+        .delete()
+        .eq("id", announcementId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Başarılı", description: "Duyuru silindi" });
+      queryClient.invalidateQueries({ queryKey: ["my-announcements"] });
     },
     onError: (error: any) => {
       toast({ title: "Hata", description: error.message, variant: "destructive" });
@@ -304,8 +366,116 @@ const EditSellerProfile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Announcements Management */}
+          <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Duyurularım
+                </CardTitle>
+                <Button
+                  onClick={() => setIsAnnouncementDialogOpen(true)}
+                  className="bg-gradient-to-r from-brand-blue to-primary"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Yeni Duyuru
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {announcements && announcements.length > 0 ? (
+                <div className="space-y-3">
+                  {announcements.map((announcement: any) => (
+                    <Card key={announcement.id} className="border-glass-border bg-dark-surface/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold mb-1">{announcement.title}</h4>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                              {announcement.content}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(announcement.created_at).toLocaleDateString('tr-TR')}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-danger-red hover:text-danger-red"
+                            onClick={() => deleteAnnouncementMutation.mutate(announcement.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Henüz duyuru eklemediniz</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Add Announcement Dialog */}
+      <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Yeni Duyuru Ekle</DialogTitle>
+            <DialogDescription>
+              Müşterilerinizle paylaşmak istediğiniz önemli bilgileri duyuru olarak ekleyin.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="announcement-title">Duyuru Başlığı</Label>
+              <Input
+                id="announcement-title"
+                value={announcementTitle}
+                onChange={(e) => setAnnouncementTitle(e.target.value)}
+                placeholder="Örn: Yeni ürünler eklendi!"
+                maxLength={100}
+              />
+            </div>
+            <div>
+              <Label htmlFor="announcement-content">Duyuru İçeriği</Label>
+              <Textarea
+                id="announcement-content"
+                value={announcementContent}
+                onChange={(e) => setAnnouncementContent(e.target.value)}
+                placeholder="Duyuru detaylarını yazın..."
+                rows={4}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {announcementContent.length}/500 karakter
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => createAnnouncementMutation.mutate()}
+                disabled={!announcementTitle || !announcementContent || createAnnouncementMutation.isPending}
+                className="flex-1 bg-gradient-to-r from-brand-blue to-primary"
+              >
+                {createAnnouncementMutation.isPending ? "Ekleniyor..." : "Duyuru Ekle"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsAnnouncementDialogOpen(false)}
+              >
+                İptal
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
