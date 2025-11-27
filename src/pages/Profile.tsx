@@ -180,9 +180,18 @@ const Profile = () => {
       });
     },
     onError: (error: any) => {
+      let errorMessage = "Kullanıcı adı güncellenemedi";
+      
+      // Check for duplicate username error
+      if (error.message?.includes("duplicate key") || error.message?.includes("profiles_username_key")) {
+        errorMessage = "Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı deneyin.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Hata",
-        description: error.message || "Kullanıcı adı güncellenemedi",
+        description: errorMessage,
         variant: "destructive",
       });
     },
