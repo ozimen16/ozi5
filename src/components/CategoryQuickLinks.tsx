@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Gamepad2, Target, Sword, Crosshair, Users, Trophy, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const iconMap: Record<string, any> = {
   Gamepad2,
@@ -14,6 +15,8 @@ const iconMap: Record<string, any> = {
 };
 
 const CategoryQuickLinks = () => {
+  const navigate = useNavigate();
+  
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -45,10 +48,19 @@ const CategoryQuickLinks = () => {
         return (
           <button
             key={category.id}
+            onClick={() => navigate(`/listings?category=${category.id}`)}
             className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-card hover:bg-card/80 border border-glass-border hover:border-brand-blue/50 transition-all"
           >
-            <div className="w-12 h-12 rounded-full bg-brand-blue/10 flex items-center justify-center group-hover:bg-brand-blue/20 transition-all">
-              <Icon className="w-6 h-6 text-brand-blue" />
+            <div className="w-12 h-12 rounded-full bg-brand-blue/10 flex items-center justify-center group-hover:bg-brand-blue/20 transition-all overflow-hidden">
+              {category.image_url ? (
+                <img 
+                  src={category.image_url} 
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Icon className="w-6 h-6 text-brand-blue" />
+              )}
             </div>
             <span className="text-xs font-medium text-center line-clamp-2">
               {category.name}

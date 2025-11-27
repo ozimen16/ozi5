@@ -35,6 +35,7 @@ const CategoriesTab = () => {
     slug: "",
     description: "",
     icon: "",
+    image_url: "",
     order_index: 0,
   });
 
@@ -124,6 +125,7 @@ const CategoriesTab = () => {
       slug: "",
       description: "",
       icon: "",
+      image_url: "",
       order_index: 0,
     });
   };
@@ -135,6 +137,7 @@ const CategoriesTab = () => {
       slug: category.slug,
       description: category.description || "",
       icon: category.icon || "",
+      image_url: category.image_url || "",
       order_index: category.order_index || 0,
     });
     setIsDialogOpen(true);
@@ -224,6 +227,18 @@ const CategoriesTab = () => {
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                     placeholder="Gamepad2"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="image_url">Resim URL</Label>
+                  <Input
+                    id="image_url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    placeholder="https://example.com/image.png"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Resim URL'si varsa ikon yerine resim gösterilir
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="order">Sıra</Label>
