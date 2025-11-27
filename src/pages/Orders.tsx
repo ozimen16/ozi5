@@ -44,7 +44,8 @@ const Orders = () => {
         .select(`
           *,
           listings (title, price, images),
-          profiles!orders_seller_id_fkey (username)
+          profiles!orders_seller_id_fkey (username),
+          reviews!reviews_order_id_fkey (id)
         `)
         .eq("buyer_id", session!.user.id)
         .order("created_at", { ascending: false });
@@ -233,7 +234,7 @@ const Orders = () => {
                     İade Talebi
                   </Button>
                 </div>
-                {order.status === "completed" && (
+                {order.status === "completed" && !order.reviews?.length && (
                   <Button
                     onClick={() => {
                       setSelectedOrder(order);
@@ -244,6 +245,11 @@ const Orders = () => {
                     <Star className="w-4 h-4 mr-2" />
                     Satıcıyı Değerlendir
                   </Button>
+                )}
+                {order.status === "completed" && order.reviews?.length > 0 && (
+                  <div className="w-full p-2 bg-success-green/10 border border-success-green/30 rounded text-center text-sm text-success-green">
+                    ✓ Değerlendirme yapıldı
+                  </div>
                 )}
               </div>
             )}
