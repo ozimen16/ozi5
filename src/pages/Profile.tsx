@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Star, Package, Wallet, LogOut, User, Camera, Edit, ShoppingCart } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Star, Package, Wallet, LogOut, User, Camera, Edit, ShoppingCart, Clock, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,9 +19,14 @@ const Profile = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [description, setDescription] = useState("");
+  const [deliveryHours, setDeliveryHours] = useState("");
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -82,6 +88,12 @@ const Profile = () => {
   useEffect(() => {
     if (profile?.username) {
       setNewUsername(profile.username);
+    }
+    if (profile?.description) {
+      setDescription(profile.description);
+    }
+    if (profile?.delivery_hours) {
+      setDeliveryHours(profile.delivery_hours);
     }
   }, [profile]);
 
@@ -193,6 +205,65 @@ const Profile = () => {
       setIsUploadingAvatar(false);
     }
   };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !session?.user?.id) return;
+
+    setIsUploadingCover(true);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `cover-${session.user.id}-${Date.now()}.${fileExt}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ cover_url: publicUrl })
+        .eq("user_id", session.user.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast({ title: "Başarılı", description: "Kapak fotoğrafı güncellendi" });
+    } catch (error: any) {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user?.id) throw new Error("Oturum bulunamadı");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          description,
+          delivery_hours: deliveryHours,
+        })
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Başarılı", description: "Profil güncellendi" });
+      setIsEditingProfile(false);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -353,6 +424,112 @@ const Profile = () => {
 
           {/* Activity */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Profile Settings Card */}
+            <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Satıcı Profili Ayarları</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    {isEditingProfile ? "İptal" : "Düzenle"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Cover Photo */}
+                <div>
+                  <Label className="mb-2 block">Kapak Fotoğrafı</Label>
+                  <div className="relative w-full h-40 rounded-lg overflow-hidden bg-slate-800 border border-glass-border">
+                    {profile?.cover_url ? (
+                      <img 
+                        src={profile.cover_url} 
+                        alt="Cover" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <ImageIcon className="w-12 h-12" />
+                      </div>
+                    )}
+                    {isEditingProfile && (
+                      <>
+                        <input
+                          ref={coverInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverChange}
+                        />
+                        <Button
+                          size="sm"
+                          className="absolute bottom-2 right-2"
+                          onClick={() => coverInputRef.current?.click()}
+                          disabled={isUploadingCover}
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          {isUploadingCover ? "Yükleniyor..." : "Değiştir"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <Label htmlFor="description">Açıklama</Label>
+                  {isEditingProfile ? (
+                    <Textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Mağazanız hakkında bilgi verin..."
+                      className="mt-2"
+                      rows={4}
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {profile?.description || "Henüz açıklama eklenmemiş"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Delivery Hours */}
+                <div>
+                  <Label htmlFor="delivery_hours">
+                    <Clock className="w-4 h-4 inline mr-1" />
+                    Teslimat Saatleri
+                  </Label>
+                  {isEditingProfile ? (
+                    <Input
+                      id="delivery_hours"
+                      value={deliveryHours}
+                      onChange={(e) => setDeliveryHours(e.target.value)}
+                      placeholder="Örn: 12:00 - 00:00"
+                      className="mt-2"
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {profile?.delivery_hours || "12:00 - 00:00"}
+                    </p>
+                  )}
+                </div>
+
+                {isEditingProfile && (
+                  <Button
+                    onClick={() => updateProfileMutation.mutate()}
+                    disabled={updateProfileMutation.isPending}
+                    className="w-full bg-gradient-to-r from-brand-blue to-primary"
+                  >
+                    {updateProfileMutation.isPending ? "Kaydediliyor..." : "Kaydet"}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Son İlanlarım</CardTitle>

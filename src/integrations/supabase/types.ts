@@ -329,7 +329,9 @@ export type Database = {
           bank_account_holder: string | null
           bank_iban: string | null
           bank_name: string | null
+          cover_url: string | null
           created_at: string | null
+          delivery_hours: string | null
           description: string | null
           id: string
           phone: string | null
@@ -347,7 +349,9 @@ export type Database = {
           bank_account_holder?: string | null
           bank_iban?: string | null
           bank_name?: string | null
+          cover_url?: string | null
           created_at?: string | null
+          delivery_hours?: string | null
           description?: string | null
           id?: string
           phone?: string | null
@@ -365,7 +369,9 @@ export type Database = {
           bank_account_holder?: string | null
           bank_iban?: string | null
           bank_name?: string | null
+          cover_url?: string | null
           created_at?: string | null
+          delivery_hours?: string | null
           description?: string | null
           id?: string
           phone?: string | null
