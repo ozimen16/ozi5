@@ -215,7 +215,7 @@ const SellerProfile = () => {
       <Navbar />
 
       {/* Cover Image */}
-      <div className="relative w-full h-80 overflow-hidden">
+      <div className="relative w-full h-64 overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
         {profile.cover_url ? (
           <img 
             src={profile.cover_url} 
@@ -223,32 +223,30 @@ const SellerProfile = () => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-            <img 
-              src="https://images.unsplash.com/photo-1579547945413-497e1b99dac0" 
-              alt="Default Cover" 
-              className="w-full h-full object-cover opacity-40"
-            />
-          </div>
+          <img 
+            src="https://images.unsplash.com/photo-1579547945413-497e1b99dac0" 
+            alt="Default Cover" 
+            className="w-full h-full object-cover opacity-40"
+          />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/30 to-transparent"></div>
       </div>
 
-      <div className="container mx-auto px-4 -mt-32 relative z-10">
+      <div className="container mx-auto px-4 -mt-24 relative z-10">
         <Card className="border-glass-border bg-slate-900/95 backdrop-blur-xl shadow-2xl">
-          <CardContent className="p-8">
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
               {/* Left Section - Profile Info */}
               <div className="flex flex-col items-center lg:items-start gap-4 lg:w-1/3">
                 <div className="relative">
-                  <Avatar className="w-40 h-40 border-4 border-slate-800 shadow-2xl ring-2 ring-brand-blue/20">
+                  <Avatar className="w-32 h-32 border-4 border-slate-800 shadow-2xl ring-2 ring-brand-blue/20">
                     <AvatarImage src={profile.avatar_url} />
-                    <AvatarFallback className="bg-gradient-to-br from-brand-blue to-primary text-4xl">
-                      <User className="w-20 h-20 text-white" />
+                    <AvatarFallback className="bg-gradient-to-br from-brand-blue to-primary text-3xl">
+                      <User className="w-16 h-16 text-white" />
                     </AvatarFallback>
                   </Avatar>
                   {completedOrders >= 10 && (
-                    <div className="absolute -top-2 -right-2 w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-slate-900 border-4 border-slate-900 shadow-lg">
+                    <div className="absolute -top-2 -right-2 w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-slate-900 border-4 border-slate-900 shadow-lg text-sm">
                       12
                     </div>
                   )}
@@ -256,89 +254,91 @@ const SellerProfile = () => {
                 
                 <div className="text-center lg:text-left w-full">
                   <div className="flex items-center justify-center lg:justify-start gap-2 mb-1">
-                    <h1 className="text-3xl font-bold text-white">{profile.username}</h1>
+                    <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
                     {profile.verified && (
-                      <CheckCircle className="w-6 h-6 text-emerald-400 fill-emerald-400" />
+                      <CheckCircle className="w-5 h-5 text-emerald-400 fill-emerald-400" />
                     )}
                   </div>
-                  <p className="text-sm text-slate-400 mb-4">
+                  <p className="text-xs text-slate-400 mb-3">
                     Üyelik Tarihi: {memberSince}
                   </p>
                   
                   {/* Action Buttons */}
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex gap-2 mb-3">
                     <Button 
+                      size="sm"
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => navigate(`/messages?user=${id}`)}
                     >
-                      <MessageSquare className="w-4 h-4 mr-2" />
+                      <MessageSquare className="w-4 h-4 mr-1" />
                       Sohbet
                     </Button>
                     <Button 
+                      size="sm"
                       className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                       onClick={() => followMutation.mutate()}
                       disabled={!session?.user?.id || followMutation.isPending}
                     >
-                      <UserPlus className="w-4 h-4 mr-2" />
+                      <UserPlus className="w-4 h-4 mr-1" />
                       {isFollowing ? "Takipten Çık" : "Takip Et"}
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-slate-400 mb-4">
-                    <Clock className="w-4 h-4" />
-                    <span>Teslimat Saatleri: {profile.delivery_hours || '12:00 - 00:00'}</span>
+                  <div className="flex items-center justify-center lg:justify-start gap-2 text-xs text-slate-400">
+                    <Clock className="w-3 h-3" />
+                    <span>Teslimat: {profile.delivery_hours || '12:00 - 00:00'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Right Section - Stats */}
               <div className="flex-1 w-full">
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-end mb-4">
                   <div className="text-right">
                     <div className="flex items-center justify-end gap-2 mb-1">
-                      <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
-                      <span className="text-5xl font-bold text-yellow-400">{averageRating}</span>
-                      <span className="text-2xl text-slate-400 mt-2">/ 10</span>
+                      <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                      <span className="text-4xl font-bold text-yellow-400">{averageRating}</span>
+                      <span className="text-xl text-slate-400 mt-1">/ 10</span>
                     </div>
-                    <p className="text-sm text-slate-400">
-                      Toplam {reviews?.length || 0} satıcı değerlendirmesi
+                    <p className="text-xs text-slate-400">
+                      Toplam {reviews?.length || 0} değerlendirme
                     </p>
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full mb-6 bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-lg font-semibold"
-                  size="lg"
+                  className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700 text-white py-4 text-base font-semibold"
+                  size="default"
                 >
                   {completedOrders} Başarılı İşlem
                 </Button>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <Card className="bg-slate-800/50 border-slate-700">
-                    <CardContent className="p-4 text-center">
-                      <Package className="w-8 h-8 mx-auto mb-2 text-brand-blue" />
-                      <p className="text-2xl font-bold text-white">{listings?.length || 0}</p>
+                    <CardContent className="p-3 text-center">
+                      <Package className="w-6 h-6 mx-auto mb-1 text-brand-blue" />
+                      <p className="text-xl font-bold text-white">{listings?.length || 0}</p>
                       <p className="text-xs text-slate-400">İlanlar</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 border-slate-700">
-                    <CardContent className="p-4 text-center">
-                      <Star className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                      <p className="text-2xl font-bold text-white">{announcements?.length || 0}</p>
+                    <CardContent className="p-3 text-center">
+                      <Star className="w-6 h-6 mx-auto mb-1 text-yellow-400" />
+                      <p className="text-xl font-bold text-white">{announcements?.length || 0}</p>
                       <p className="text-xs text-slate-400">Duyurular</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 border-slate-700">
-                    <CardContent className="p-4 text-center">
-                      <MessageSquare className="w-8 h-8 mx-auto mb-2 text-purple-400" />
-                      <p className="text-2xl font-bold text-white">{reviews?.length || 0}</p>
+                    <CardContent className="p-3 text-center">
+                      <MessageSquare className="w-6 h-6 mx-auto mb-1 text-purple-400" />
+                      <p className="text-xl font-bold text-white">{reviews?.length || 0}</p>
                       <p className="text-xs text-slate-400">Değerlendirmeler</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 border-slate-700">
-                    <CardContent className="p-4 text-center">
-                      <UserPlus className="w-8 h-8 mx-auto mb-2 text-pink-400" />
-                      <p className="text-2xl font-bold text-white">{followersCount || 0}</p>
+                    <CardContent className="p-3 text-center">
+                      <UserPlus className="w-6 h-6 mx-auto mb-1 text-pink-400" />
+                      <p className="text-xl font-bold text-white">{followersCount || 0}</p>
                       <p className="text-xs text-slate-400">Takipçiler</p>
                     </CardContent>
                   </Card>
@@ -348,14 +348,14 @@ const SellerProfile = () => {
 
             {/* Verified Seller Badge */}
             {profile.verified && (
-              <div className="mt-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400 mt-1" />
+              <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-emerald-400 mb-1">Kimlik Onaylı Satıcı</h3>
-                    <p className="text-sm text-slate-400">
-                      Bu üye <strong>Kimlik Onaylı Satıcı</strong> ünvanına sahip bir mağaza üyesidir.
-                      Bu üyenin kimlik bilgileri sistemimizde kayıtlıdır.
+                    <h3 className="font-semibold text-emerald-400 mb-0.5 text-sm">Kimlik Onaylı Satıcı</h3>
+                    <p className="text-xs text-slate-400">
+                      Bu üye <strong>Kimlik Onaylı Satıcı</strong> ünvanına sahiptir.
+                      Kimlik bilgileri sistemimizde kayıtlıdır.
                     </p>
                   </div>
                 </div>
