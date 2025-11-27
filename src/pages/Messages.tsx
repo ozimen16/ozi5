@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Send, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -43,6 +43,20 @@ const Messages = () => {
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       return data.session;
+    },
+  });
+
+  // Fetch current user's profile
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", session!.user.id)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -184,9 +198,11 @@ const Messages = () => {
     },
   });
 
-  // Setup realtime subscription
+  // Setup realtime subscription with notification sound
   useEffect(() => {
     if (!session?.user?.id) return;
+
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIHGS67OmXSwgRVa3p6qRSFApHoeHyvmwhBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAoUX7Pp6qhVEwpHn+Dyvm0hBjuP1vLNeisFKn/H8N2RQAo=');
 
     const channel = supabase
       .channel("messages-channel")
@@ -198,7 +214,11 @@ const Messages = () => {
           table: "messages",
           filter: `to_user_id=eq.${session.user.id}`,
         },
-        () => {
+        (payload) => {
+          // Play notification sound if message is not from current user
+          if (payload.new.from_user_id !== session.user.id) {
+            audio.play().catch(e => console.log('Ses çalınamadı:', e));
+          }
           queryClient.invalidateQueries({ queryKey: ["messages"] });
           queryClient.invalidateQueries({ queryKey: ["conversations"] });
         }
@@ -259,6 +279,7 @@ const Messages = () => {
                     >
                       <div className="flex items-center gap-3">
                         <Avatar>
+                          {conv.avatar_url && <AvatarImage src={conv.avatar_url} />}
                           <AvatarFallback>
                             <User className="w-4 h-4" />
                           </AvatarFallback>
@@ -294,6 +315,7 @@ const Messages = () => {
                 <div className="p-4 border-b border-glass-border">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      {selectedUserProfile?.avatar_url && <AvatarImage src={selectedUserProfile.avatar_url} />}
                       <AvatarFallback>
                         <User className="w-4 h-4" />
                       </AvatarFallback>
@@ -309,38 +331,59 @@ const Messages = () => {
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    {messages?.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${
-                          msg.from_user_id === session?.user?.id
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
+                    {messages?.map((msg) => {
+                      const isMyMessage = msg.from_user_id === session?.user?.id;
+                      const avatarUrl = isMyMessage 
+                        ? myProfile?.avatar_url
+                        : selectedUserProfile?.avatar_url;
+                      
+                      return (
                         <div
-                          className={`max-w-[70%] p-3 rounded-lg ${
-                            msg.from_user_id === session?.user?.id
-                              ? "bg-brand-blue text-white"
-                              : "bg-dark-surface"
+                          key={msg.id}
+                          className={`flex gap-2 ${
+                            isMyMessage ? "justify-end" : "justify-start"
                           }`}
                         >
-                          <p className="text-sm">{msg.body}</p>
-                          <p
-                            className={`text-xs mt-1 ${
-                              msg.from_user_id === session?.user?.id
-                                ? "text-white/70"
-                                : "text-muted-foreground"
+                          {!isMyMessage && (
+                            <Avatar className="w-8 h-8">
+                              {avatarUrl && <AvatarImage src={avatarUrl} />}
+                              <AvatarFallback>
+                                <User className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div
+                            className={`max-w-[70%] p-3 rounded-lg ${
+                              isMyMessage
+                                ? "bg-brand-blue text-white"
+                                : "bg-dark-surface"
                             }`}
                           >
-                            {new Date(msg.created_at).toLocaleTimeString("tr-TR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                            <p className="text-sm">{msg.body}</p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                isMyMessage
+                                  ? "text-white/70"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {new Date(msg.created_at).toLocaleTimeString("tr-TR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                          {isMyMessage && (
+                            <Avatar className="w-8 h-8">
+                              {avatarUrl && <AvatarImage src={avatarUrl} />}
+                              <AvatarFallback>
+                                <User className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </ScrollArea>
 
