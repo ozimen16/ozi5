@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,27 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/");
+      }
+    };
+    
+    checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,23 +88,31 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      let errorMessage = "Giriş yapılırken bir hata oluştu.";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "E-posta veya şifre hatalı. Lütfen tekrar deneyin.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "E-posta adresinizi onaylamanız gerekiyor.";
+      }
+      
       toast({
         title: "Giriş Hatası",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-    } else {
+    } else if (data.session) {
       toast({
         title: "Hoş geldiniz!",
         description: "Başarıyla giriş yaptınız.",
       });
-      navigate("/");
+      // Navigation will be handled by onAuthStateChange
     }
     setLoading(false);
   };

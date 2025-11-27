@@ -3,20 +3,32 @@ import { User, Menu, X, Wallet, MessageSquare, Package, HelpCircle, ShoppingCart
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Session } from "@supabase/supabase-js";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    },
-  });
+  // Set up auth state listener
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      // Invalidate profile query when session changes
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [queryClient]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user?.id],
