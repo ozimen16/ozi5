@@ -46,9 +46,6 @@ const Index = () => {
                 Öne Çıkan İlanlar
               </span>
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              En popüler ve güvenilir satıcılardan binlerce güvenli ilan
-            </p>
           </div>
           <FeaturedListings />
         </div>
