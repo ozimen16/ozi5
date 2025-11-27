@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import SupportTicketsTab from "@/components/admin/SupportTicketsTab";
 import IpBansTab from "@/components/admin/IpBansTab";
 
 const ADMIN_PASSWORD = "notshop2025";
+const ADMIN_EMAIL = "admin@panel.local";
 
 const AdminPanel = () => {
   const { toast } = useToast();
@@ -30,26 +32,56 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
-    const adminAuth = localStorage.getItem("admin_auth");
-    if (adminAuth === "authenticated") {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
+    const checkAuth = async () => {
+      const adminAuth = localStorage.getItem("admin_auth");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (adminAuth === "authenticated" && session?.user?.email === ADMIN_EMAIL) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    if (password !== ADMIN_PASSWORD) {
+      toast({ title: "Hata", description: "Yanlış şifre", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Admin kullanıcısı ile Supabase'e giriş yap
+      const { error } = await supabase.auth.signInWithPassword({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+      });
+
+      if (error) {
+        toast({ 
+          title: "Hata", 
+          description: "Admin girişi başarısız. Lütfen tekrar deneyin.",
+          variant: "destructive" 
+        });
+        return;
+      }
+
       localStorage.setItem("admin_auth", "authenticated");
       setIsAuthenticated(true);
       toast({ title: "Başarılı", description: "Admin paneline hoş geldiniz" });
-    } else {
-      toast({ title: "Hata", description: "Yanlış şifre", variant: "destructive" });
+    } catch (error) {
+      toast({ 
+        title: "Hata", 
+        description: "Bir hata oluştu", 
+        variant: "destructive" 
+      });
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("admin_auth");
     setIsAuthenticated(false);
     setPassword("");
