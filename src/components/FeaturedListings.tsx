@@ -20,6 +20,7 @@ interface ListingWithProfile {
   user_id: string;
   seller_score?: number;
   username?: string;
+  total_sales?: number;
 }
 
 const FeaturedListings = () => {
@@ -53,7 +54,7 @@ const FeaturedListings = () => {
       const userIds = listingsData.map(l => l.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("user_id, username, seller_score")
+        .select("user_id, username, seller_score, total_sales")
         .in("user_id", userIds);
 
       // Merge data
@@ -63,6 +64,7 @@ const FeaturedListings = () => {
           ...listing,
           username: profile?.username,
           seller_score: profile?.seller_score,
+          total_sales: profile?.total_sales,
         };
       });
 
@@ -247,8 +249,16 @@ const FeaturedListings = () => {
                     {Number(listing.seller_score || 0).toFixed(1)}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground truncate">
+                <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
                   @{listing.username || "kullanıcı"}
+                  {(listing as any).total_sales >= 5 && (
+                    <img 
+                      src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 
+                      alt="5+ Satış Rozeti"
+                      className="w-4 h-4"
+                      title="5+ Başarılı Satış"
+                    />
+                  )}
                 </span>
               </CardDescription>
             </CardHeader>

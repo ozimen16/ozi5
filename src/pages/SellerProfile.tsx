@@ -271,6 +271,14 @@ const SellerProfile = () => {
                     {profile.verified && (
                       <CheckCircle className="w-5 h-5 text-emerald-400 fill-emerald-400" />
                     )}
+                    {(profile.total_sales || 0) >= 5 && (
+                      <img 
+                        src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 
+                        alt="5+ Satış Rozeti"
+                        className="w-6 h-6"
+                        title="5+ Başarılı Satış"
+                      />
+                    )}
                   </div>
                   <p className="text-xs text-slate-400 mb-3">
                     Üyelik Tarihi: {memberSince}
