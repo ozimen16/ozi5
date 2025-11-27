@@ -86,17 +86,9 @@ const Navbar = () => {
             </Button>
             {session && (
               <>
-                <Button variant="ghost" className="hover:text-brand-blue" onClick={() => navigate("/orders")}>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Siparişlerim
-                </Button>
                 <Button variant="ghost" className="hover:text-brand-blue" onClick={() => navigate("/wallet")}>
                   <Wallet className="w-4 h-4 mr-2" />
                   Bakiye Yükle
-                </Button>
-                <Button variant="ghost" className="hover:text-brand-blue" onClick={() => navigate("/withdraw")}>
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Para Çek
                 </Button>
                 <Button variant="ghost" className="hover:text-brand-blue" onClick={() => navigate("/messages")}>
                   <MessageSquare className="w-4 h-4 mr-2" />
@@ -191,17 +183,9 @@ const Navbar = () => {
             </Button>
             {session && (
               <>
-                <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/orders")}>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Siparişlerim
-                </Button>
                 <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/wallet")}>
                   <Wallet className="w-4 h-4 mr-2" />
                   Bakiye Yükle
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/withdraw")}>
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Para Çek
                 </Button>
                 <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/messages")}>
                   <MessageSquare className="w-4 h-4 mr-2" />
