@@ -180,14 +180,16 @@ const Orders = () => {
               )}
             </div>
 
-            {!isSeller && order.status === "delivered" && (
+            {!isSeller && order.status !== "pending" && order.status !== "cancelled" && order.status !== "disputed" && (
               <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={() => confirmOrderMutation.mutate(order.id)}
-                  className="bg-gradient-to-r from-success-green to-brand-blue"
-                >
-                  Siparişi Onayla
-                </Button>
+                {order.status !== "completed" && (
+                  <Button
+                    onClick={() => confirmOrderMutation.mutate(order.id)}
+                    className="bg-gradient-to-r from-success-green to-brand-blue"
+                  >
+                    Siparişi Onayla
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -196,7 +198,7 @@ const Orders = () => {
                   }}
                 >
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  İade Talebi
+                  {order.status === "disputed" ? "İade Talebi Devam Ediyor" : "İade Talebi Oluştur"}
                 </Button>
               </div>
             )}
