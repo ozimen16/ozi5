@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingCart, Package, AlertCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ShoppingCart, Package, AlertCircle, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
 const Orders = () => {
@@ -22,6 +22,9 @@ const Orders = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -116,6 +119,33 @@ const Orders = () => {
     },
   });
 
+  const reviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user?.id || !selectedOrder) throw new Error("Oturum bulunamadı");
+
+      const { error } = await supabase.from("reviews").insert({
+        order_id: selectedOrder.id,
+        reviewer_id: session.user.id,
+        reviewed_user_id: selectedOrder.seller_id,
+        rating: rating,
+        comment: comment || null,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Başarılı", description: "Değerlendirme gönderildi" });
+      setIsReviewDialogOpen(false);
+      setRating(0);
+      setComment("");
+      setSelectedOrder(null);
+      queryClient.invalidateQueries({ queryKey: ["buyer-orders"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Hata", description: error.message, variant: "destructive" });
+    },
+  });
+
   if (!session) {
     navigate("/auth");
     return null;
@@ -181,25 +211,40 @@ const Orders = () => {
             </div>
 
             {!isSeller && order.status !== "pending" && order.status !== "cancelled" && order.status !== "disputed" && (
-              <div className="flex gap-2 mt-4">
-                {order.status !== "completed" && (
+              <div className="space-y-2 mt-4">
+                <div className="flex gap-2">
+                  {order.status !== "completed" && (
+                    <Button
+                      onClick={() => confirmOrderMutation.mutate(order.id)}
+                      className="flex-1 bg-gradient-to-r from-success-green to-brand-blue"
+                    >
+                      Siparişi Onayla
+                    </Button>
+                  )}
                   <Button
-                    onClick={() => confirmOrderMutation.mutate(order.id)}
-                    className="bg-gradient-to-r from-success-green to-brand-blue"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsReportDialogOpen(true);
+                    }}
                   >
-                    Siparişi Onayla
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    İade Talebi
+                  </Button>
+                </div>
+                {order.status === "completed" && (
+                  <Button
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsReviewDialogOpen(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-brand-blue to-primary"
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Satıcıyı Değerlendir
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedOrder(order);
-                    setIsReportDialogOpen(true);
-                  }}
-                >
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  {order.status === "disputed" ? "İade Talebi Devam Ediyor" : "İade Talebi Oluştur"}
-                </Button>
               </div>
             )}
           </div>
@@ -311,6 +356,59 @@ const Orders = () => {
               className="w-full bg-gradient-to-r from-warning-orange to-error-red"
             >
               Talebi Gönder
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Değerlendirme Dialog */}
+      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Satıcıyı Değerlendir</DialogTitle>
+            <DialogDescription>
+              Bu siparişle ilgili deneyiminizi değerlendirin
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="mb-2 block">Puanınız</Label>
+              <div className="flex gap-2 justify-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 ${
+                        star <= rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="comment">Yorumunuz (isteğe bağlı)</Label>
+              <Textarea
+                id="comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Deneyiminizi paylaşın..."
+                className="bg-dark-surface border-glass-border"
+                rows={4}
+              />
+            </div>
+            <Button
+              onClick={() => reviewMutation.mutate()}
+              disabled={rating === 0 || reviewMutation.isPending}
+              className="w-full bg-gradient-to-r from-brand-blue to-primary"
+            >
+              Değerlendirmeyi Gönder
             </Button>
           </div>
         </DialogContent>

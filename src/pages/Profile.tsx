@@ -43,6 +43,23 @@ const Profile = () => {
     },
   });
 
+  const { data: reviews } = useQuery({
+    queryKey: ["reviews", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews")
+        .select(`
+          *,
+          reviewer:profiles!reviews_reviewer_id_fkey(username, avatar_url),
+          order:orders(listing:listings(title))
+        `)
+        .eq("reviewed_user_id", session!.user.id)
+        .order("created_at", { ascending: false });
+      return data;
+    },
+  });
+
   const { data: listings } = useQuery({
     queryKey: ["my-listings", session?.user?.id],
     enabled: !!session?.user?.id,
@@ -335,7 +352,7 @@ const Profile = () => {
           </div>
 
           {/* Activity */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Son İlanlarım</CardTitle>
@@ -373,6 +390,78 @@ const Profile = () => {
                       İlan Oluştur
                     </Button>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Reviews Section */}
+            <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-400" />
+                  Aldığım Değerlendirmeler
+                </CardTitle>
+                {reviews && reviews.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {reviews.length} değerlendirme • Ortalama: {(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)} ⭐
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                {reviews && reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {reviews.map((review: any) => (
+                      <div
+                        key={review.id}
+                        className="border border-glass-border rounded-lg p-4 bg-dark-surface/50"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={review.reviewer?.avatar_url} />
+                              <AvatarFallback>
+                                <User className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {review.reviewer?.username || "Kullanıcı"}
+                              </p>
+                              {review.order?.listing?.title && (
+                                <p className="text-xs text-muted-foreground">
+                                  {review.order.listing.title}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-sm text-foreground/80 mb-2">
+                            {review.comment}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(review.created_at).toLocaleDateString("tr-TR")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                    Henüz değerlendirme almadınız
+                  </p>
                 )}
               </CardContent>
             </Card>
