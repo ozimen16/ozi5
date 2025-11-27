@@ -338,6 +338,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           username: string | null
+          username_changes: number | null
           verified: boolean | null
         }
         Insert: {
@@ -355,6 +356,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           username?: string | null
+          username_changes?: number | null
           verified?: boolean | null
         }
         Update: {
@@ -372,6 +374,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           username?: string | null
+          username_changes?: number | null
           verified?: boolean | null
         }
         Relationships: []

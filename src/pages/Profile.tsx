@@ -75,9 +75,33 @@ const Profile = () => {
 
   const updateUsernameMutation = useMutation({
     mutationFn: async (username: string) => {
+      if (!profile) throw new Error("Profil bulunamadı");
+      
+      const isFirstChange = (profile.username_changes || 0) === 0;
+      const currentBalance = profile.balance || 0;
+      
+      // İlk değişiklik değilse ve bakiye yeterli değilse hata
+      if (!isFirstChange && currentBalance < 20) {
+        throw new Error("Yetersiz bakiye. Kullanıcı adı değiştirmek için 20 TL gereklidir.");
+      }
+
+      // Bakiye düşür (ilk değişiklik değilse)
+      if (!isFirstChange) {
+        const { error: balanceError } = await supabase
+          .from("profiles")
+          .update({ balance: currentBalance - 20 })
+          .eq("user_id", session!.user.id);
+        
+        if (balanceError) throw balanceError;
+      }
+
+      // Kullanıcı adını güncelle ve sayacı artır
       const { error } = await supabase
         .from("profiles")
-        .update({ username })
+        .update({ 
+          username,
+          username_changes: (profile.username_changes || 0) + 1
+        })
         .eq("user_id", session!.user.id);
       
       if (error) throw error;
@@ -85,15 +109,18 @@ const Profile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setIsEditingUsername(false);
+      const isFirstChange = (profile?.username_changes || 0) === 0;
       toast({
         title: "Başarılı",
-        description: "Kullanıcı adınız güncellendi",
+        description: isFirstChange 
+          ? "Kullanıcı adınız güncellendi" 
+          : "Kullanıcı adınız güncellendi. 20 TL bakiyenizden düşüldü.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Hata",
-        description: "Kullanıcı adı güncellenemedi",
+        description: error.message || "Kullanıcı adı güncellenemedi",
         variant: "destructive",
       });
     },
@@ -191,6 +218,13 @@ const Profile = () => {
                   
                   {isEditingUsername ? (
                     <div className="w-full max-w-xs space-y-2">
+                      {profile && (profile.username_changes || 0) > 0 && (
+                        <div className="p-2 bg-warning-orange/10 border border-warning-orange/20 rounded-lg">
+                          <p className="text-xs text-warning-orange">
+                            ⚠️ Kullanıcı adı değiştirme ücreti: 20 TL
+                          </p>
+                        </div>
+                      )}
                       <Input
                         value={newUsername}
                         onChange={(e) => setNewUsername(e.target.value)}
@@ -203,7 +237,7 @@ const Profile = () => {
                           onClick={() => updateUsernameMutation.mutate(newUsername)}
                           disabled={updateUsernameMutation.isPending || !newUsername}
                         >
-                          Kaydet
+                          {(profile?.username_changes || 0) > 0 ? "Onayla ve Öde (20 TL)" : "Kaydet"}
                         </Button>
                         <Button
                           size="sm"
@@ -218,16 +252,23 @@ const Profile = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-xl">{profile?.username || "Kullanıcı"}</h3>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={() => setIsEditingUsername(true)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-xl">{profile?.username || "Kullanıcı"}</h3>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => setIsEditingUsername(true)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {profile && (profile.username_changes || 0) === 0 && (
+                        <p className="text-xs text-success-green">
+                          ✓ İlk kullanıcı adı değişikliği ücretsiz
+                        </p>
+                      )}
                     </div>
                   )}
                   
