@@ -21,6 +21,7 @@ interface ListingWithProfile {
   seller_score?: number;
   username?: string;
   total_sales?: number;
+  verified?: boolean;
 }
 
 const FeaturedListings = () => {
@@ -54,7 +55,7 @@ const FeaturedListings = () => {
       const userIds = listingsData.map(l => l.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("user_id, username, seller_score, total_sales")
+        .select("user_id, username, seller_score, total_sales, verified")
         .in("user_id", userIds);
 
       // Merge data
@@ -65,6 +66,7 @@ const FeaturedListings = () => {
           username: profile?.username,
           seller_score: profile?.seller_score,
           total_sales: profile?.total_sales,
+          verified: profile?.verified,
         };
       });
 
@@ -251,6 +253,14 @@ const FeaturedListings = () => {
                 </div>
                 <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
                   @{listing.username || "kullanıcı"}
+                  {(listing as any).verified && (
+                    <img 
+                      src="https://cdn.itemsatis.com/uploads/medals/60760ea5cd37a-medals-2644af7bc00efe5566a2154da9c32c4fc8f643fa.png" 
+                      alt="Onaylı Satıcı"
+                      className="w-4 h-4"
+                      title="Onaylı Satıcı"
+                    />
+                  )}
                   {(listing as any).total_sales >= 5 && (
                     <img 
                       src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 

@@ -154,6 +154,31 @@ const UsersTab = () => {
     },
   });
 
+  const toggleVerifyMutation = useMutation({
+    mutationFn: async ({ userId, verified }: { userId: string; verified: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ verified: !verified })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Başarılı",
+        description: "Kullanıcı onay durumu güncellendi",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Hata",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const banIpMutation = useMutation({
     mutationFn: async ({ ipAddress, reason }: { ipAddress: string; reason: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -247,6 +272,7 @@ const UsersTab = () => {
                   <TableHead>Bakiye</TableHead>
                   <TableHead>Satış Puanı</TableHead>
                   <TableHead>Toplam Satış</TableHead>
+                  <TableHead>Onay Durumu</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>İşlemler</TableHead>
                 </TableRow>
@@ -264,9 +290,34 @@ const UsersTab = () => {
                       <TableCell>{user.balance?.toFixed(2)} ₺</TableCell>
                       <TableCell>{user.seller_score?.toFixed(1) || 0}</TableCell>
                       <TableCell>{user.total_sales || 0}</TableCell>
+                      <TableCell>
+                        {user.verified ? (
+                          <Badge className="bg-green-500">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            Onaylı
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            Onaysız
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell>{getRoleBadge(user.user_roles)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant={user.verified ? "outline" : "default"}
+                            onClick={() => {
+                              toggleVerifyMutation.mutate({
+                                userId: user.id,
+                                verified: user.verified || false,
+                              });
+                            }}
+                            className={user.verified ? "" : "bg-green-600 hover:bg-green-700"}
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                          </Button>
                           <Select
                             defaultValue={user.user_roles?.role || "user"}
                             onValueChange={(value: "admin" | "moderator" | "user") =>
@@ -312,7 +363,7 @@ const UsersTab = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       Kullanıcı bulunamadı
                     </TableCell>
                   </TableRow>
