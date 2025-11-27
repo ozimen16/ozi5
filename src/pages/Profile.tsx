@@ -72,6 +72,36 @@ const Profile = () => {
       return data;
     },
   });
+ 
+  const { data: sellerOrders } = useQuery({
+    queryKey: ["seller-orders", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("seller_id", session!.user.id)
+        .in("status", ["paid", "delivered", "completed"]);
+ 
+      if (error) throw error;
+      return data;
+    },
+  });
+ 
+  const { data: buyerOrders } = useQuery({
+    queryKey: ["buyer-orders", session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("buyer_id", session!.user.id)
+        .not("status", "eq", "cancelled");
+ 
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (!session) {
@@ -367,8 +397,51 @@ const Profile = () => {
             </Card>
           </div>
 
-          {/* Activity */}
+          {/* Account Summary */}
           <div className="lg:col-span-2 space-y-8">
+            <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Hesap Özeti</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-dark-surface/60 border border-glass-border">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">Hesap Bakiyesi</span>
+                      <span className="text-xl font-bold">
+                        {Number(profile?.balance || 0).toFixed(2)} TL
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-dark-surface/60 border border-glass-border">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">Satılan Toplam İlan</span>
+                      <span className="text-xl font-bold">
+                        {sellerOrders?.length || 0}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-dark-surface/60 border border-glass-border">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">Toplam Kazanç</span>
+                      <span className="text-xl font-bold">
+                        {`${(sellerOrders || []).reduce((sum, order) => sum + Number(order.price || 0) - Number(order.commission || 0), 0).toFixed(2)} TL`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-dark-surface/60 border border-glass-border">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">Toplam Harcama Tutarı</span>
+                      <span className="text-xl font-bold">
+                        {`${(buyerOrders || []).reduce((sum, order) => sum + Number(order.price || 0), 0).toFixed(2)} TL`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+ 
+            {/* Activity */}
             <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Son İlanlarım</CardTitle>
