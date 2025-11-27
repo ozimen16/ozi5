@@ -269,7 +269,15 @@ const SellerProfile = () => {
                   <div className="flex items-center justify-center lg:justify-start gap-2 mb-1">
                     <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
                     {profile.verified && (
-                      <CheckCircle className="w-5 h-5 text-emerald-400 fill-emerald-400" />
+                      <>
+                        <CheckCircle className="w-5 h-5 text-emerald-400 fill-emerald-400" />
+                        <img 
+                          src="https://cdn.itemsatis.com/uploads/medals/60760ea5cd37a-medals-2644af7bc00efe5566a2154da9c32c4fc8f643fa.png" 
+                          alt="Onaylı Satıcı"
+                          className="w-6 h-6"
+                          title="Onaylı Satıcı"
+                        />
+                      </>
                     )}
                     {(profile.total_sales || 0) >= 5 && (
                       <img 

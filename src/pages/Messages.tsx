@@ -20,6 +20,7 @@ interface Conversation {
   last_message_time: string;
   unread_count: number;
   total_sales?: number;
+  verified?: boolean;
 }
 
 interface Message {
@@ -87,7 +88,7 @@ const Messages = () => {
       // Fetch all user profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, username, avatar_url, total_sales")
+        .select("user_id, username, avatar_url, total_sales, verified")
         .in("user_id", Array.from(userIds));
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
@@ -108,6 +109,7 @@ const Messages = () => {
             last_message_time: msg.created_at,
             unread_count: 0,
             total_sales: partnerProfile?.total_sales,
+            verified: partnerProfile?.verified,
           });
         }
         
@@ -164,7 +166,7 @@ const Messages = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, avatar_url, total_sales")
+        .select("username, avatar_url, total_sales, verified")
         .eq("user_id", selectedConversation)
         .maybeSingle();
       
@@ -290,6 +292,14 @@ const Messages = () => {
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-medium truncate flex items-center gap-1">
                               {conv.username}
+                              {conv.verified && (
+                                <img 
+                                  src="https://cdn.itemsatis.com/uploads/medals/60760ea5cd37a-medals-2644af7bc00efe5566a2154da9c32c4fc8f643fa.png" 
+                                  alt="Onaylı Satıcı"
+                                  className="w-4 h-4"
+                                  title="Onaylı Satıcı"
+                                />
+                              )}
                               {(conv.total_sales || 0) >= 5 && (
                                 <img 
                                   src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 
@@ -333,6 +343,14 @@ const Messages = () => {
                     <div>
                       <p className="font-medium flex items-center gap-2">
                         {selectedConversationData?.username || selectedUserProfile?.username || "Kullanıcı"}
+                        {((selectedConversationData?.verified || (selectedUserProfile as any)?.verified)) && (
+                          <img 
+                            src="https://cdn.itemsatis.com/uploads/medals/60760ea5cd37a-medals-2644af7bc00efe5566a2154da9c32c4fc8f643fa.png" 
+                            alt="Onaylı Satıcı"
+                            className="w-5 h-5"
+                            title="Onaylı Satıcı"
+                          />
+                        )}
                         {((selectedConversationData?.total_sales || 0) >= 5 || ((selectedUserProfile as any)?.total_sales || 0) >= 5) && (
                           <img 
                             src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 
