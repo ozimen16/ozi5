@@ -47,15 +47,30 @@ const Profile = () => {
     queryKey: ["reviews", session?.user?.id],
     enabled: !!session?.user?.id,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          reviewer:profiles!reviews_reviewer_id_fkey(username, avatar_url),
-          order:orders(listing:listings(title))
-        `)
+        .select("*")
         .eq("reviewed_user_id", session!.user.id)
         .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      // Fetch related data separately
+      if (data && data.length > 0) {
+        const reviewerIds = [...new Set(data.map(r => r.reviewer_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, username, avatar_url")
+          .in("user_id", reviewerIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+        
+        return data.map(review => ({
+          ...review,
+          reviewer: profileMap.get(review.reviewer_id)
+        }));
+      }
+      
       return data;
     },
   });
@@ -516,15 +531,10 @@ const Profile = () => {
                               <p className="font-medium text-sm">
                                 {review.reviewer?.username || "Kullanıcı"}
                               </p>
-                              {review.order?.listing?.title && (
-                                <p className="text-xs text-muted-foreground">
-                                  {review.order.listing.title}
-                                </p>
-                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
+                            {Array.from({ length: 10 }).map((_, i) => (
                               <Star
                                 key={i}
                                 className={`w-4 h-4 ${

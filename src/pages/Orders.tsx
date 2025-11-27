@@ -372,25 +372,28 @@ const Orders = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="mb-2 block">Puanınız</Label>
-              <div className="flex gap-2 justify-center">
-                {[1, 2, 3, 4, 5].map((star) => (
+              <Label className="mb-2 block">Puanınız (1-10)</Label>
+              <div className="flex gap-2 justify-center flex-wrap">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
                   <button
-                    key={star}
+                    key={score}
                     type="button"
-                    onClick={() => setRating(star)}
-                    className="transition-transform hover:scale-110"
+                    onClick={() => setRating(score)}
+                    className={`w-12 h-12 rounded-lg font-bold transition-all hover:scale-110 ${
+                      score <= rating
+                        ? "bg-yellow-400 text-slate-900"
+                        : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                    }`}
                   >
-                    <Star
-                      className={`w-10 h-10 ${
-                        star <= rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
+                    {score}
                   </button>
                 ))}
               </div>
+              {rating > 0 && (
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  Seçilen puan: {rating}/10
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="comment">Yorumunuz (isteğe bağlı)</Label>
