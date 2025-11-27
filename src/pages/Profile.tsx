@@ -326,6 +326,14 @@ const Profile = () => {
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-xl">{profile?.username || "Kullanıcı"}</h3>
+                        {(profile?.total_sales || 0) >= 5 && (
+                          <img 
+                            src="https://cdn.itemsatis.com/uploads/medals/alimmagaza.png" 
+                            alt="5+ Satış Rozeti"
+                            className="w-6 h-6"
+                            title="5+ Başarılı Satış"
+                          />
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
