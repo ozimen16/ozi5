@@ -135,15 +135,28 @@ const SellerProfile = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          reviewer:profiles!reviewer_id(username, avatar_url),
-          order:orders(listing:listings(title))
-        `)
+        .select("*")
         .eq("reviewed_user_id", id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
+      
+      // Fetch related data separately
+      if (data && data.length > 0) {
+        const reviewerIds = [...new Set(data.map(r => r.reviewer_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, username, avatar_url")
+          .in("user_id", reviewerIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+        
+        return data.map(review => ({
+          ...review,
+          reviewer: profileMap.get(review.reviewer_id)
+        }));
+      }
+      
       return data;
     },
   });
@@ -516,11 +529,6 @@ const SellerProfile = () => {
                           <div className="flex items-center justify-between mb-2">
                             <div>
                               <p className="font-semibold text-white">{review.reviewer?.username || "Kullanıcı"}</p>
-                              {review.order?.listing?.title && (
-                                <p className="text-sm text-slate-400">
-                                  {review.order.listing.title}
-                                </p>
-                              )}
                             </div>
                             <div className="flex items-center gap-1">
                               {Array.from({ length: 10 }).map((_, i) => (
