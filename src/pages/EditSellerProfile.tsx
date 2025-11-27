@@ -85,18 +85,19 @@ const EditSellerProfile = () => {
 
     setIsUploadingAvatar(true);
     const fileExt = file.name.split(".").pop();
-    const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
-
+    const fileName = `${session.user.id}.${fileExt}`;
+    const filePath = `${session.user.id}/${fileName}`;
+ 
     try {
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true });
-
+        .upload(filePath, file, { upsert: true });
+ 
       if (uploadError) throw uploadError;
-
+ 
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from("profiles")
@@ -120,18 +121,19 @@ const EditSellerProfile = () => {
 
     setIsUploadingCover(true);
     const fileExt = file.name.split(".").pop();
-    const fileName = `cover-${session.user.id}-${Date.now()}.${fileExt}`;
-
+    const fileName = `cover-${Date.now()}.${fileExt}`;
+    const filePath = `${session.user.id}/${fileName}`;
+ 
     try {
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
+       const { error: uploadError } = await supabase.storage
+         .from("avatars")
+         .upload(filePath, file, { upsert: true });
+ 
+       if (uploadError) throw uploadError;
+ 
+       const { data: { publicUrl } } = supabase.storage
+         .from("avatars")
+         .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from("profiles")
