@@ -54,10 +54,25 @@ const SellerProfile = () => {
         .from("reviews")
         .select(`
           *,
-          reviewer:profiles!reviews_reviewer_id_fkey(username, avatar_url),
+          reviewer:profiles!reviewer_id(username, avatar_url),
           order:orders(listing:listings(title))
         `)
         .eq("reviewed_user_id", id)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: announcements } = useQuery({
+    queryKey: ["seller-announcements", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("announcements")
+        .select("*")
+        .eq("user_id", id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
@@ -224,7 +239,7 @@ const SellerProfile = () => {
                   <Card className="bg-slate-800/50 border-slate-700">
                     <CardContent className="p-4 text-center">
                       <Star className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                      <p className="text-2xl font-bold text-white">{reviews?.length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{announcements?.length || 0}</p>
                       <p className="text-xs text-slate-400">Duyurular</p>
                     </CardContent>
                   </Card>
@@ -278,7 +293,7 @@ const SellerProfile = () => {
               <MessageSquare className="w-4 h-4" />
               Duyurular
               <Badge variant="secondary" className="ml-1 bg-slate-700">
-                4
+                {announcements?.length || 0}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="reviews" className="gap-2 data-[state=active]:bg-brand-blue">
@@ -344,12 +359,28 @@ const SellerProfile = () => {
 
           {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4 mt-6">
-            <Card className="border-glass-border bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-12 text-center">
-                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">Henüz duyuru yok</p>
-              </CardContent>
-            </Card>
+            {announcements && announcements.length > 0 ? (
+              <div className="space-y-4">
+                {announcements.map((announcement: any) => (
+                  <Card key={announcement.id} className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold text-lg text-white mb-2">{announcement.title}</h3>
+                      <p className="text-sm text-slate-300 mb-3">{announcement.content}</p>
+                      <p className="text-xs text-slate-500">
+                        {format(new Date(announcement.created_at), "d MMMM yyyy HH:mm", { locale: tr })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                  <p className="text-slate-400">Henüz duyuru yok</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Reviews Tab */}
