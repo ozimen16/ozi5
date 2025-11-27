@@ -39,7 +39,7 @@ const ListingsTab = () => {
         .select(`
           *,
           categories (name),
-          profiles!listings_user_id_fkey (username)
+          profiles!user_id (username)
         `)
         .order("created_at", { ascending: false });
 
