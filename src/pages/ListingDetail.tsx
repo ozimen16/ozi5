@@ -424,7 +424,10 @@ const ListingDetail = () => {
                 {/* Seller Info */}
                 <div>
                   <h3 className="font-semibold mb-3">Satıcı Bilgileri</h3>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-surface/50">
+                  <div 
+                    className="flex items-center gap-3 p-3 rounded-lg bg-dark-surface/50 hover:bg-dark-surface transition-colors cursor-pointer"
+                    onClick={() => navigate(`/seller/${listing.user_id}`)}
+                  >
                     <Avatar>
                       <AvatarImage src={listing.profile?.avatar_url} />
                       <AvatarFallback>
