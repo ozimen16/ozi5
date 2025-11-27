@@ -17,6 +17,7 @@ import Support from "./pages/Support";
 import Orders from "./pages/Orders";
 import AdminPanel from "./pages/AdminPanel";
 import SellerProfile from "./pages/SellerProfile";
+import EditSellerProfile from "./pages/EditSellerProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/create-listing" element={<CreateListing />} />
           <Route path="/edit-listing/:id" element={<CreateListing />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/edit-seller-profile" element={<EditSellerProfile />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/withdraw" element={<Withdraw />} />
