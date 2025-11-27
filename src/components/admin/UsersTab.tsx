@@ -169,6 +169,8 @@ const UsersTab = () => {
         description: "Kullanıcı onay durumu güncellendi",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
     },
     onError: (error: any) => {
       toast({
